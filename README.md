@@ -12,7 +12,13 @@
     - `@EqualsAndHashCode`의 무분별한 남용
         - 사용하지 않는 모든 필드에 대해서 적용이 되기 때문에 필요한 필드에만 설정해서 사용하는 것이 효율적이다.
     - 롬복의 설정은 `lombok.config`의 공통 처리를 통해 제한
-        - config에 어긋나는 동작들은 빌드 시 fail되어 관리할 수 있다.
+        - 롬복 config에 어긋나는 롬복어노테이션은 빌드 시 fail 처리되어 관리할 수 있다.
+        ```
+        lombok.setter.flagUsage=ERROR
+        -> @Setter 사용시 빌드 실패
+        lombok.toString.flagUsage=WARNING
+        -> @ToString 사용시 경고 출력
+        ``` 
     - 클래스 상단의 `@Builder`는 지양하자.
         - 객체가 빌더를 통해 생성 시 필드의 기본 값은 null로 생성된다.
         - 필수 값 등이 누락될 수 있기 때문에 안정적인 방식이 아니다.
