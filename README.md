@@ -12,7 +12,7 @@
     - `@EqualsAndHashCode`의 무분별한 남용
         - 사용하지 않는 모든 필드에 대해서 적용이 되기 때문에 필요한 필드에만 설정해서 사용하는 것이 효율적이다.
     - 롬복의 설정은 `lombok.config`의 공통 처리를 통해 제한
-        - 롬복 config에 어긋나는 롬복어노테이션은 빌드 시 fail 처리되어 관리할 수 있다.
+        - 롬복 config에 어긋나는 롬복 어노테이션은 빌드 시 관리할 수 있다.
         ```
         lombok.setter.flagUsage=ERROR
         -> @Setter 사용시 빌드 실패
