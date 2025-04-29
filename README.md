@@ -60,7 +60,6 @@ public class ErrorResponse {
     }
 }
 ```
-
 - ErrorCode
 ```
 @Getter
@@ -88,16 +87,51 @@ public enum ErrorCode {
     - 컨트롤러에서 모든 요청에 대한 값 검증을 진행하고 서비스 레이어를 호출해야한다.
     - 컨트롤러의 중요 책임 중 하나는 요청 값에 대한 검증이다.
     - 스프링은 @ControllerAdvice을 통해 일관성 있게 처리할 수 있다.
-```
-@ControllerAdvice
-@Slf4j
-public class GlobalExceptionHandler {
-    @ExceptionHandler(Exception.class)
-    protected ResponseEntity<ErrorResponse> handleException(Exception e){
-        log.error("handlerException", e);
-        final ErrorResponse response = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR);
-
-        return new ResponseEntity<>(response, HttpStatis.valueOf(ErrorCode.INTERNAL_SERVER_ERROR.getStatus()));
+    ```
+    @ControllerAdvice
+    @Slf4j
+    public class GlobalExceptionHandler {
+        // 모든 예외를 잡을 수 있는 핸들러
+        @ExceptionHandler(Exception.class)
+        protected ResponseEntity<ErrorResponse> handleException(Exception e){
+            log.error("handlerException", e);
+            final ErrorResponse response = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR);
+    
+            return new ResponseEntity<>(response, HttpStatus.valueOf(ErrorCode.INTERNAL_SERVER_ERROR.getStatus()));
+        }
+    
+        // 구체적인 예외를 잡을 수 있는 핸들러
+        @ExceptionHandler(IllegalArgumentException.class
+                        ,IllegalStateException.class) // 배열 형태로도 받을 수 있다.
+        protected ResponseEntity<ErrorResponse> handleIllegalException(RuntimeException e){
+            log.error("IllegalHandlerException", e);
+            final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE);
+    
+            return new ResponseEntity<>(response, HttpStatus.valueOf(ErrorCode.INVALID_INPUT_VALUE.getStatus()));
+        }
     }
-}
-```
+    ```
+## ✔ 계층화를 통한 Business Exception 처리 방법
+- 비즈니스 로직을 수행하는 코드에서 예외가 발생하는 경우 최상위 Business Exception을 생성(exception 패키지 별도 생성)하여 처리하면 통일감 있는 예외처리를 할 수 있다.
+    - 글로벌 익셉션 핸들러
+    ```
+    @ExceptionHandler(BusinessException.class)
+    protected ResponseEntity<ErrorResponse> handleBusinessException(final BusinessException e) {
+        log.error("handleEntityNotFoundException", e);
+        final ErrorCode errorCode = e.getErrorCode();
+        final ErrorResponse response = ErrorResponse.of(errorCode);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(errorCode.getStatus()));
+    }
+    ```
+    - 비즈니스 익셉션
+    ```
+    public class BusinessException extends RuntimeException {
+        private final ErrorCode errorCode; // final 변수이기 때문에 반드시 초기화가 필요
+    
+        public BusinessException(ErrorCode errorCode) {
+            super(errorCode.getMessage());
+            this.errorCode = errorCode;
+        }
+    }
+    ```
+
