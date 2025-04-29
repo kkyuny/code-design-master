@@ -33,5 +33,5 @@
 - Checked Exception VS UnChecked Exception
   - Checked Exception: 반드시 예외 처리해야함 / Rollback 안됨 / IOException, SQLException
   - UnChecked Exception: 예외 처리하지 않아도됨 / Rollback 진행 / NullPointerException, IllegalArgumentException
-    > 체크드 익셉션은 롤백이 되지 않기 때문에 다른 곳으로 예외를 전파하는건 바람직하지 않다.
+    > 체크드 익셉션은 롤백이 되지 않기 때문에 다른 곳으로 예외를 전파하는건 바람직하지 않다.    
     > 예외를 언체크드 익셉션으로 처리할 수 있다면 언체크드 익셉션으로 처리하는 것이 좋다.
