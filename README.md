@@ -27,11 +27,58 @@
         - 최종적으로 객체가 생성되는 시점에 필수 값과 선택 값이 구분되는 등 객체를 도메인 요구사항에 맞게 만드는 것이 중요하다.
           
 ### ch4. Exception 처리 방법
-- 오류 코드보다 예외를 사용하자.
-    - 로직으로 예외 처리 가능하다면 `try-catch`는 지양한다.
-    - `try-catch`를 사용한다면 예외를 구체적으로 작성하는 것이 좋다.
-- Checked Exception VS UnChecked Exception
-  - Checked Exception: 반드시 예외 처리해야함 / Rollback 안됨 / IOException, SQLException
-  - UnChecked Exception: 예외 처리하지 않아도됨 / Rollback 진행 / NullPointerException, IllegalArgumentException
+## ✔ 오류 코드보다 예외를 사용하자.
+- 로직으로 예외 처리 가능하다면 `try-catch`는 지양한다.
+- `try-catch`를 사용한다면 예외를 구체적으로 작성하는 것이 좋다.
+## ✔ Checked Exception VS UnChecked Exception
+- Checked Exception: 반드시 예외 처리해야함 / Rollback 안됨 / IOException, SQLException
+- UnChecked Exception: 예외 처리하지 않아도됨 / Rollback 진행 / NullPointerException, IllegalArgumentException
     > 체크드 익셉션은 롤백이 되지 않기 때문에 다른 곳으로 예외를 전파하는건 바람직하지 않다.    
     > 예외를 언체크드 익셉션으로 처리할 수 있다면 언체크드 익셉션으로 처리하는 것이 좋다.
+
+### ch5. API Server Error 처리
+## ✔ 통일된 Error Response를 갖자.
+- ErrorResponse 객체
+```
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+// Map<Key, Value> -> 정확한 Error Response 형태가 런타임시 결정되기 때문에 Map은 지양
+public class ErrorResponse { 
+    private String message;
+    private int status;
+    private List<FieldError> errors;
+    private String code;
+    ...
+
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    public static class FieldError {
+        private String field;
+        private String value;
+        private String reason;
+        ...
+    }
+}
+```
+
+- ErrorCode
+```
+@Getter
+@RequiredArgsConstructor
+public enum ErrorCode {
+    // Common
+    INVALID_INPUT_VALUE(400, "C001", "Invalid Input Value"),
+    METHOD_NOT_ALLOWED(405, "C002", "Invalid Input Value"),
+    ...
+
+    private final int status;
+    private final String code; // HTTP Status Code
+    private final String message;
+    
+    ErrorCode(final int status, final String code, final String message) {
+        this.status = status;
+        this.message = message;
+        this.code = code;
+    }
+}
+```
