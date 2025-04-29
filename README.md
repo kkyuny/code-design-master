@@ -1,4 +1,4 @@
-### ch2. 객체를 풍부하게 표현하기
+### ch3. 객체를 풍부하게 표현하기
 ## ✔ Lombok을 잘 사용해야 객체 디자인을 망치치 않는다.
 - @Data는 지양하자
     - @Setter가 무분별하게 남용된다.
@@ -25,6 +25,13 @@
         - 생성자에 `@Builder`를 사용하여 필수 값을 입력받는 방식을 사용하는 것이 안정적이다.
         - 필수 값에 대한 검증은 생성자 내에서 `Assert.hasText(필드, 메세지)` 등을 사용해서 처리한다.        
         - 최종적으로 객체가 생성되는 시점에 필수 값과 선택 값이 구분되는 등 객체를 도메인 요구사항에 맞게 만드는 것이 중요하다.
-    - 오류 코드보다 예외를 사용하자.
-        - 로직으로 예외 처리 가능하다면 try-catch는 지양한다.
-        - try-catch를 사용한다면 예외를 구체적으로 작성하는 것이 좋다.
+          
+### ch4. Exception 처리 방법
+- 오류 코드보다 예외를 사용하자.
+    - 로직으로 예외 처리 가능하다면 `try-catch`는 지양한다.
+    - `try-catch`를 사용한다면 예외를 구체적으로 작성하는 것이 좋다.
+- Checked Exception VS UnChecked Exception
+  - Checked Exception: 반드시 예외 처리해야함 / Rollback 안됨 / IOException, SQLException
+  - UnChecked Exception: 예외 처리하지 않아도됨 / Rollback 진행 / NullPointerException, IllegalArgumentException
+    > 체크드 익셉션은 롤백이 되지 않기 때문에 다른 곳으로 예외를 전파하는건 바람직하지 않다.
+    > 예외를 언체크드 익셉션으로 처리할 수 있다면 언체크드 익셉션으로 처리하는 것이 좋다.
