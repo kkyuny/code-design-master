@@ -69,6 +69,7 @@ public enum ErrorCode {
     // Common
     INVALID_INPUT_VALUE(400, "C001", "Invalid Input Value"),
     METHOD_NOT_ALLOWED(405, "C002", "Invalid Input Value"),
+    INTERNAL_SERVER_ERROR(500, "C003", "Server Error"),
     ...
 
     private final int status;
@@ -79,6 +80,24 @@ public enum ErrorCode {
         this.status = status;
         this.message = message;
         this.code = code;
+    }
+}
+```
+## ✔ @ControllerAdvice를 활용한 일관된 예외 핸들링
+- 컨트롤러 예외처리
+    - 컨트롤러에서 모든 요청에 대한 값 검증을 진행하고 서비스 레이어를 호출해야한다.
+    - 컨트롤러의 중요 책임 중 하나는 요청 값에 대한 검증이다.
+    - 스프링은 @ControllerAdvice을 통해 일관성 있게 처리할 수 있다.
+```
+@ControllerAdvice
+@Slf4j
+public class GlobalExceptionHandler {
+    @ExceptionHandler(Exception.class)
+    protected ResponseEntity<ErrorResponse> handleException(Exception e){
+        log.error("handlerException", e);
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR);
+
+        return new ResponseEntity<>(response, HttpStatis.valueOf(ErrorCode.INTERNAL_SERVER_ERROR.getStatus()));
     }
 }
 ```
