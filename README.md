@@ -134,4 +134,9 @@ public enum ErrorCode {
         }
     }
     ```
-
+## ✔ 효율적인 Validaion
+- Custom Validation 어노테이션 만들기
+    - 컨트롤러에서 직접 값 검증을 진행할 수 있지만 검증 어노테이션을 만들어 처리하면 중복되는 코드를 줄일 수 있다.
+      ```
+      ```
+-
