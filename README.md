@@ -206,4 +206,5 @@ public enum ErrorCode {
       ```
       - **implements ConstraintValidator<EmailUnique, String>**: `@EmailUnique`가 붙은 `String 타입` 필드에 대해 유효성 검사하는 클래스라는 의미
         > dto에 `@EmailUnique` private `String` email; 선언으로 해당 로직을 처리할 수 있음.
+        > dto 자체에 벨리데이션이 필요한 경우 클래스에 커스텀 어노테이션을 추가하면 된다.
         > 여러 필드를 검사해야 할 땐 어노테이션을 새로 추가하는 것이 일반적인 방법이다.
