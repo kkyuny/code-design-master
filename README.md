@@ -31,8 +31,8 @@
 - 로직으로 예외 처리 가능하다면 `try-catch`는 지양한다.
 - `try-catch`를 사용한다면 예외를 구체적으로 작성하는 것이 좋다.
 ## ✔ Checked Exception VS UnChecked Exception
-- Checked Exception: 반드시 예외 처리해야함 / Rollback 안됨 / IOException, SQLException
-- UnChecked Exception: 예외 처리하지 않아도됨 / Rollback 진행 / NullPointerException, IllegalArgumentException
+- Checked Exception: `반드시 예외 처리해야함` / `Rollback 안됨` / `IOException, SQLException 등`
+- UnChecked Exception: `예외 처리하지 않아도됨` / `Rollback 진행` / `NullPointerException, IllegalArgumentException 등`
     > 체크드 익셉션은 롤백이 되지 않기 때문에 다른 곳으로 예외를 전파하는건 바람직하지 않다.    
     > 예외를 언체크드 익셉션으로 처리할 수 있다면 언체크드 익셉션으로 처리하는 것이 좋다.
 
@@ -86,7 +86,7 @@ public enum ErrorCode {
 - 컨트롤러 예외처리
     - 컨트롤러에서 모든 요청에 대한 값 검증을 진행하고 서비스 레이어를 호출해야한다.
     - 컨트롤러의 중요 책임 중 하나는 요청 값에 대한 검증이다.
-    - 스프링은 @ControllerAdvice을 통해 일관성 있게 처리할 수 있다.
+    - 스프링은 `@ControllerAdvice`을 통해 일관성 있게 처리할 수 있다.
     ```
     @ControllerAdvice
     @Slf4j
@@ -112,7 +112,7 @@ public enum ErrorCode {
     }
     ```
 ## ✔ 계층화를 통한 Business Exception 처리 방법
-- 비즈니스 로직을 수행하는 코드에서 예외가 발생하는 경우 최상위 Business Exception을 생성(exception 패키지 별도 생성)하여 처리하면 통일감 있는 예외처리를 할 수 있다.
+- 비즈니스 로직을 수행하는 코드에서 예외가 발생하는 경우 최상위 `Business Exception`을 생성(exception 패키지 별도 생성)하여 처리하면 통일감 있는 예외처리를 할 수 있다.
     - 글로벌 익셉션 핸들러
     ```
     @ExceptionHandler(BusinessException.class)
@@ -136,7 +136,74 @@ public enum ErrorCode {
     ```
 ## ✔ 효율적인 Validaion
 - Custom Validation 어노테이션 만들기
-    - 컨트롤러에서 직접 값 검증을 진행할 수 있지만 검증 어노테이션을 만들어 처리하면 중복되는 코드를 줄일 수 있다.
+    - 컨트롤러에서 직접 값 검증을 진행할 수 있지만 `검증 어노테이션`을 만들어 처리하면 중복되는 코드를 줄일 수 있다.
       ```
+      // 컨트롤러
+      @PostMapping
+      public Member create(@RequestBody @Valid final SignUpRequest dto) {
+          ...
+      }
+
+      // dto
+      @Getter
+      @NoArgsConstructor(access = AccessLevel.PROTECTED)
+      public class SignUpRequest {          
+          @Email
+          @EmailUnique
+          private String email;
+
+        public SignUpRequest(String email) {
+            this.email = email;
+        }
+      }
       ```
--
+      > 컨트롤러에 요청이 들어왔을 때 이메일 형식검사를 진행한다.
+    - 커스컴 어노테이션 만들기
+      ```
+      @Documented
+      @Constraint(validatedBy = EmailDuplicationValidator.class)
+      @Target({ElementType.METHOD, ElementType.FIELD})
+      @Retention(RetentionPolicy.RUNTIME)
+      public @interface EmailUnique {
+          String message() default "Email is Duplication";
+    
+          Class<?>[] groups() default {};
+    
+          Class<? extends Payload>[] payload() default {};
+      }
+      ```
+      - **@Constraint**: 어떤 Validator 클래스와 연결되는지를 지정함(검증 로직)
+      - **@Target**: 어노테이션을 어디에 붙일 수 있는지 (예: 필드, 메서드 등)
+      - **@Retention**: 런타임에도 유지되어야 검증 가능    
+      - **message / groups / payload**: Bean Validation 표준 규약 필수 요소
+      - **@interface**: 자바에서 어노테이션을 정의할 때 쓰는 문법
+      - **@인터페이스인 이유**: 어노테이션은 필드나 메서드 위에 붙여서 메타데이터를 알려주는 도구이기 때문에 정적 구조(=interface)로 정의
+    - 어노테이션 검증 로직
+      ```
+      @Component
+      @RequiredArgsConstructor
+      public class EmailDuplicationValidator implements ConstraintValidator<EmailUnique, String> {
+          private final MemberRepository memberRepository;
+
+          @Override
+          public void initialize(EmailUnique emailUnique) {
+
+          }
+
+          @Override
+          public boolean isValid(String email, ConstraintValidatorContext cxt) {
+              boolean isExistEmail = memberRepository.existsByEmail(email);
+
+              if (isExistEmail) {
+                  cxt.disableDefaultConstraintViolation();
+                  cxt.buildConstraintViolationWithTemplate(
+                          MessageFormat.format("Email {0} already exists!", email))
+                      .addConstraintViolation();
+              }
+              return !isExistEmail;
+          }
+      }
+      ```
+      - **implements ConstraintValidator<EmailUnique, String>**: `@EmailUnique`가 붙은 `String 타입` 필드에 대해 유효성 검사하는 클래스라는 의미
+        > dto에 `@EmailUnique` private `String` email; 선언으로 해당 로직을 처리할 수 있음.
+        > 여러 필드를 검사해야 할 땐 어노테이션을 새로 추가하는 것이 일반적인 방법이다.
