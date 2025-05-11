@@ -256,7 +256,7 @@ public enum ErrorCode {
     }
     ```
     - ✅ 좋은 설계: 객체 간 협력 구조
-    ```
+    ```java
     class OrderService {
         private PaymentProcessor paymentProcessor;
         private InventoryService inventoryService;
