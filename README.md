@@ -39,7 +39,7 @@
 ### ch5. API Server Error 처리
 ## ✔ 통일된 Error Response를 갖자.
 - ErrorResponse 객체
-```
+```java
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 // Map<Key, Value> -> 정확한 Error Response 형태가 런타임시 결정되기 때문에 Map은 지양
@@ -61,7 +61,7 @@ public class ErrorResponse {
 }
 ```
 - ErrorCode
-```
+```java
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
@@ -87,7 +87,7 @@ public enum ErrorCode {
     - 컨트롤러에서 모든 요청에 대한 값 검증을 진행하고 서비스 레이어를 호출해야한다.
     - 컨트롤러의 중요 책임 중 하나는 요청 값에 대한 검증이다.
     - 스프링은 `@ControllerAdvice`을 통해 일관성 있게 처리할 수 있다.
-    ```
+    ```java
     @ControllerAdvice
     @Slf4j
     public class GlobalExceptionHandler {
@@ -114,7 +114,7 @@ public enum ErrorCode {
 ## ✔ 계층화를 통한 Business Exception 처리 방법
 - 비즈니스 로직을 수행하는 코드에서 예외가 발생하는 경우 최상위 `Business Exception`을 생성(exception 패키지 별도 생성)하여 처리하면 통일감 있는 예외처리를 할 수 있다.
     - 글로벌 익셉션 핸들러
-    ```
+    ```java
     @ExceptionHandler(BusinessException.class)
     protected ResponseEntity<ErrorResponse> handleBusinessException(final BusinessException e) {
         log.error("handleEntityNotFoundException", e);
@@ -124,7 +124,7 @@ public enum ErrorCode {
     }
     ```
     - 비즈니스 익셉션
-    ```
+    ```java
     public class BusinessException extends RuntimeException {
         private final ErrorCode errorCode; // final 변수이기 때문에 반드시 초기화가 필요
     
@@ -159,7 +159,7 @@ public enum ErrorCode {
       ```
       > 컨트롤러에 요청이 들어왔을 때 이메일 형식검사를 진행한다.
     - 커스컴 어노테이션 만들기
-      ```
+      ```java
       @Documented
       @Constraint(validatedBy = EmailDuplicationValidator.class)
       @Target({ElementType.METHOD, ElementType.FIELD})
@@ -179,7 +179,7 @@ public enum ErrorCode {
       - **@interface**: 자바에서 어노테이션을 정의할 때 쓰는 문법
       - **@인터페이스인 이유**: 어노테이션은 필드나 메서드 위에 붙여서 메타데이터를 알려주는 도구이기 때문에 정적 구조(=interface)로 정의
     - 어노테이션 검증 로직
-      ```
+      ```java
       @Component
       @RequiredArgsConstructor
       public class EmailDuplicationValidator implements ConstraintValidator<EmailUnique, String> {
@@ -267,6 +267,6 @@ public enum ErrorCode {
         }
     }
     ```
-        - `OrderService`: 조율자 역할
-        - `PaymentProcessor`, `InventoryService`: 각자의 책임 수행
-        - 객체 간 협력 구조로 변경에 강한 설계
+    - `OrderService`: 조율자 역할
+    - `PaymentProcessor`, `InventoryService`: 각자의 책임 수행
+    - 객체 간 협력 구조로 변경에 강한 설계
