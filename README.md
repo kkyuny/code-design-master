@@ -230,5 +230,43 @@ public enum ErrorCode {
 - 서비스는 `행위 중심`으로 설계해야 한다.
     - MemberService -> Member All... 모든 기능이 혼합되어 있다.
     - MemberSignService -> 회원가입에 대한 책임만 명확히 분리됨.
+      
 ## ✔ 객체는 협력 관계를 유지해야 한다.
+- 객체는 **혼자 모든 일을 처리하지 않는다.**
+- 각 객체는 **자신의 책임만 수행**하고, **필요한 작업은 다른 객체와 협력**하여 완성한다.
+- 즉, 객체는 **역할을 분리**하고 **유기적인 협력 구조**를 갖는 것이 이상적이다.
+- ✅ 왜 중요한가?
 
+| 이유           | 설명                                                                 |
+|----------------|----------------------------------------------------------------------|
+| 역할 분리       | 각 객체가 책임을 잘게 나누어 유연하고 변경에 강한 구조가 됨             |
+| 응집도 ↑, 결합도 ↓ | 협력을 통해 느슨하게 연결되어 재사용성과 유지보수성이 향상됨             |
+| 확장성 확보     | 새로운 기능이 필요한 경우 객체 하나만 추가하거나 교체하면 됨             |
+
+- ✅ 예시
+    - ❌ 나쁜 설계: 하나의 객체가 모든 책임을 가짐
+    ```java
+    class OrderService {
+        void createOrder() {
+            // 결제 처리
+            // 재고 차감
+            // 할인 계산
+            // 알림 발송
+        }
+    }
+    ```
+    - ✅ 좋은 설계: 객체 간 협력 구조
+    ```
+    class OrderService {
+        private PaymentProcessor paymentProcessor;
+        private InventoryService inventoryService;
+    
+        void createOrder() {
+            paymentProcessor.process();
+            inventoryService.reduceStock();
+        }
+    }
+    ```
+        - `OrderService`: 조율자 역할
+        - `PaymentProcessor`, `InventoryService`: 각자의 책임 수행
+        - 객체 간 협력 구조로 변경에 강한 설계
