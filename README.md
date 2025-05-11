@@ -230,3 +230,5 @@ public enum ErrorCode {
 - 서비스는 `행위 중심`으로 설계해야 한다.
     - MemberService -> Member All... 모든 기능이 혼합되어 있다.
     - MemberSignService -> 회원가입에 대한 책임만 명확히 분리됨.
+## ✔ 객체는 협력 관계를 유지해야 한다.
+
