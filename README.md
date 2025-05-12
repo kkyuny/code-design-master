@@ -270,3 +270,43 @@ public enum ErrorCode {
     - `OrderService`: 조율자 역할
     - `PaymentProcessor`, `InventoryService`: 각자의 책임 수행
     - 객체 간 협력 구조로 변경에 강한 설계
+
+## ✔ 묻지말고 시켜라
+### 🧭 핵심 원칙
+- 객체는 **복종**하는 존재가 아니라, **자율적인 협력자**여야 한다.
+- 객체 간에는 **정보를 묻기보다**, **책임을 시켜야** 한다.
+
+### 📌 왜 중요한가?
+- 객체의 내부 상태를 외부에서 묻는 방식은 유연하지 못하다.
+- 다양한 조건이나 상태가 생기면 **중복 코드**, **조건 분기 증가**, **유지보수성 저하** 발생.
+- 반면 객체에게 책임을 부여하면 **캡슐화 유지**, **응집도 향상**, **책임 중심 설계 가능**.
+
+### 🔍 안티패턴 예시: 조건을 묻고 판단
+```java
+public void apply(final long couponId) {
+    final CouponLegacy coupon = getCoupon(couponId);
+
+    if (LocalDate.now().isAfter(coupon.getExpirationDate())) {
+        throw new IllegalStateException("사용 기간이 만료된 쿠폰입니다.");
+    }
+    if (coupon.isUsed()) {
+        throw new IllegalStateException("이미 사용한 쿠폰입니다.");
+    }
+}
+```
+- 외부에서 쿠폰 상태를 일일이 묻고 있다.
+- 상태 기준 조건 로직이 중복되거나, 조건 변경 시 유지보수가 어려움.
+### ✅ 개선된 설계: 쿠폰에 책임을 위임
+``` java
+public void apply(final long couponId) {
+    final Coupon coupon = getCoupon(couponId);
+    coupon.apply(); // 쿠폰 객체 내부에서 모든 유효성 처리
+}
+```
+- 묻지 않고 시킨다.
+- 쿠폰 객체가 스스로 `apply()` 책임을 수행.
+- 비즈니스 규칙과 상태 관리를 도메인 객체 내부에 캡슐화.
+
+### 정리
+- 좋은 객체지향 설계란 객체에게 충분한 책임을 부여하고, 그 책임을 직접 수행하게 하는 방식이다.
+- `묻지 말고 시켜라`는 객체 간 `자율성과 협력의 원칙`을 잘 보여주는 설계 철학이다.
