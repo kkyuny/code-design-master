@@ -315,10 +315,55 @@ public void apply(final long couponId) {
 ### ch7. 시스템 내 강결합 문제 해결
 ## ApplicationEventPublisher를 이용한 시스템 내의 강결합 문제 해결
 - 시스템의 강결한 결합 문제
-<img width="1163" alt="image" src="https://github.com/user-attachments/assets/43d3d957-fd05-4bc8-9414-9074656e43ee" />
-- 많은 DI가 발생하고 있기 때문에 서비스 분리를 고려가 필요하다.    
-    - ApplicationEventPublisher를 이용하여 강결합 문제를 해결할 수 있다.
-    - 회원 가입 -> 회원 가입 쿠폰 발행 -> `회원가입 완료 이벤트 발행` -> 회원 가입 이벤트 리스너 동작 -> 회원 가입 이메일 전송 
-- 하나의 트랜잭션으로 묶여있기 때문에 회원가입이 실패했어도 외부 이메일이 발송되는 등의 문제가 발생할 수 있다.
-    - @TransactionEventListener를 통하면 해당 트랜잭션이 Commit이 된 후 리스너를 동작시켜 트랜잭션 문제를 해결할 수 있다. 
-- 트랜잭션 성능 문제 해결 @Async로 쓰레드를 분리(트랜잭션이 분리된다.)하여 처리할 수 있다.
+    ```java
+    @Service
+    @RequiredArgsConstructor
+    public class MemberSignUpService {
+    
+        private final MemberRepository memberRepository;
+        private final CouponIssueService couponIssueService;
+        private final EmailSenderService emailSenderService;
+    
+        @Transactional
+        public void signUp(final MemberSignUpRequest dto) {
+            final Member member = memberRepository.save(dto.toEntity()); // 1. member 엔티티 영속화
+            emailSenderService.sendSignUpEmail(member); // 2. 외부 시스템 이메일 호출
+            couponIssueService.issueSignUpCoupon(member.getId()); // 3. 회원가입 쿠폰 발급 -> 예외 발생, 회원, 쿠폰 모두 롤백, 문제는 회원 가입 이메일 전송 완료...
+        }
+    }
+    ```
+    - 많은 DI가 발생하고 있기 때문에 서비스 분리 고려가 필요하다.    
+        - ApplicationEventPublisher를 이용하여 강결합 문제를 해결할 수 있다.
+        - 회원 가입 -> 회원 가입 쿠폰 발행 -> `회원가입 완료 이벤트 발행` -> 회원 가입 이벤트 리스너 동작 -> 회원 가입 이메일 전송 
+    - 하나의 트랜잭션으로 묶여있기 때문에 회원가입이 실패했어도 외부 이메일이 발송되는 등의 문제가 발생할 수 있다.
+        - @TransactionEventListener를 통하면 해당 트랜잭션이 Commit이 된 후 리스너를 동작시켜 트랜잭션 문제를 해결할 수 있다.            
+        - @Async로 쓰레드를 분리(트랜잭션이 분리된다.)하여 처리 및 성능관련 문제를 해결할 수 있다.
+    ```java
+    @Component
+    @RequiredArgsConstructor
+    public class MemberEventHandler {
+    
+        private final EmailSenderService emailSenderService;
+    
+        @TransactionalEventListener
+        public void memberSignedUpEventListener(MemberSignedUpEvent dto){
+            emailSenderService.sendSignUpEmail(dto.getMember());
+        }
+    }
+    ```      
+
+    ```java
+        @Component
+        @RequiredArgsConstructor
+        public class OrderEventHandler {
+        
+            private final CartService cartService;
+        
+            @Async
+            @EventListener
+            public void orderCompletedEventListener(OrderCompletedEvent event) {
+                cartService.deleteCart(event.getOrder());
+            }
+        
+        }
+    ```
