@@ -296,6 +296,7 @@ public void apply(final long couponId) {
 ```
 - 외부에서 쿠폰 상태를 일일이 묻고 있다.
 - 상태 기준 조건 로직이 중복되거나, 조건 변경 시 유지보수가 어려움.
+  
 ### ✅ 개선된 설계: 쿠폰에 책임을 위임
 ``` java
 public void apply(final long couponId) {
@@ -381,3 +382,67 @@ public class OrderEventHandler {
 }
 ```
 - `@Async` 사용 시 별도 쓰레드에서 실행 → 성능 최적화 / 트랜잭션 분리되어 비동기 처리
+
+
+### ch8. 테스팅 방법 및 전략(JUnit5)
+## ✅ 테스트 인스턴스 생성 전략
+- JUnit5에서는 **각 테스트 메서드마다 새로운 인스턴스가 생성**됨
+  - → 테스트 간 **상호 영향 방지**
+- 클래스당 한번만 인스턴스 생성 방법
+```java
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+```
+  
+## ✅ 테스트 메서드 실행 순서 지정
+- 클래스 레벨에서 `@TestMethodOrder` 선언
+```java
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+```
+- 각 테스트에 실행 순서 지정
+```java
+@Order(1)
+@Test
+void testFirst() {}
+
+@Order(2)
+@Test
+void testSecond() {}
+```
+
+## ✅ 전처리 / 후처리 어노테이션
+- @BeforeAll: 테스트 전체 시작 전 1회 / static 메서드 필요 (인스턴스 생성 전에 실행되므로 static 필요)
+- @BeforeEach: 각 테스트 메서드 실행 전	
+- @AfterEach: 각 테스트 메서드 실행 후	
+- @AfterAll: 테스트 전체 종료 후 1회	/ static 메서드 필요 (실행 시점은 테스트 후지만, 어떤 인스턴스를 쓸지 정해져 있지 않기 때문)
+
+## ✅ @ParameterizedTest (매개변수 기반 테스트)
+- 주요 어노테이션
+    - @ValueSource	기본 타입 값 배열 전달
+    - @EnumSource	Enum 상수 전달
+    - @CsvSource	CSV 형태 문자열로 다중 파라미터 전달
+    - @MethodSource	메서드에서 파라미터 목록을 반환
+```java
+@ParameterizedTest
+@ValueSource(strings = {"apple", "banana"})
+void testFruits(String fruit) {
+    assertNotNull(fruit);
+}
+```
+> 예시 코드
+
+## AssertJ 사용 예시
+```java
+import static org.assertj.core.api.Assertions.*;
+
+@Test
+void testString() {
+    String name = "chatgpt";
+    assertThat(name)
+        .isNotNull()
+        .startsWith("chat")
+        .endsWith("gpt")
+        .hasSize(7);
+}
+```
+> 체이닝 방법을 사용하여 테스트 할 수 있다.
+> 정확한 실패 메시지 제공과 풍부한 조건 메서드를 제공하여 테스트가 용이하다.
