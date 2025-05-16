@@ -314,7 +314,7 @@ public void apply(final long couponId) {
 
 ### ch7. 시스템 내 강결합 문제 해결
 ## ApplicationEventPublisher를 이용한 시스템 내의 강결합 문제 해결
-- 시스템의 강결한 결합 문제
+- 🔧 기존 문제점
     ```java
     @Service
     @RequiredArgsConstructor
@@ -326,44 +326,58 @@ public void apply(final long couponId) {
     
         @Transactional
         public void signUp(final MemberSignUpRequest dto) {
-            final Member member = memberRepository.save(dto.toEntity()); // 1. member 엔티티 영속화
-            emailSenderService.sendSignUpEmail(member); // 2. 외부 시스템 이메일 호출
-            couponIssueService.issueSignUpCoupon(member.getId()); // 3. 회원가입 쿠폰 발급 -> 예외 발생, 회원, 쿠폰 모두 롤백, 문제는 회원 가입 이메일 전송 완료...
+            final Member member = memberRepository.save(dto.toEntity());
+            emailSenderService.sendSignUpEmail(member); // 외부 호출
+            couponIssueService.issueSignUpCoupon(member.getId()); // 예외 발생 시 전체 롤백
         }
     }
     ```
-    - 많은 DI가 발생하고 있기 때문에 서비스 분리 고려가 필요하다.    
-        - ApplicationEventPublisher를 이용하여 강결합 문제를 해결할 수 있다.
-        - 회원 가입 -> 회원 가입 쿠폰 발행 -> `회원가입 완료 이벤트 발행` -> 회원 가입 이벤트 리스너 동작 -> 회원 가입 이메일 전송 
-    - 하나의 트랜잭션으로 묶여있기 때문에 회원가입이 실패했어도 외부 이메일이 발송되는 등의 문제가 발생할 수 있다.
-        - @TransactionEventListener를 통하면 해당 트랜잭션이 Commit이 된 후 리스너를 동작시켜 트랜잭션 문제를 해결할 수 있다.            
-        - @Async로 쓰레드를 분리(트랜잭션이 분리된다.)하여 처리 및 성능관련 문제를 해결할 수 있다.
-    ```java
-    @Component
-    @RequiredArgsConstructor
-    public class MemberEventHandler {
-    
-        private final EmailSenderService emailSenderService;
-    
-        @TransactionalEventListener
-        public void memberSignedUpEventListener(MemberSignedUpEvent dto){
-            emailSenderService.sendSignUpEmail(dto.getMember());
-        }
-    }
-    ```      
+    - 🔴 문제 요약
+        - 회원가입, 이메일 전송, 쿠폰 발급이 하나의 서비스에 모두 의존 → 강한 결합
+        - 트랜잭션 내에서 외부 시스템 호출 → 예외 발생 시 롤백 불일치 위험
+        (ex: 이메일은 전송됐지만 DB는 롤백)
 
-    ```java
-        @Component
-        @RequiredArgsConstructor
-        public class OrderEventHandler {
-        
-            private final CartService cartService;
-        
-            @Async
-            @EventListener
-            public void orderCompletedEventListener(OrderCompletedEvent event) {
-                cartService.deleteCart(event.getOrder());
-            }
-        
-        }
-    ```
+- 🧩 해결 전략: 이벤트 기반 아키텍처 도입
+### 1. 이벤트발행 구조로 리팩토링
+- 회원가입 후 이벤트 발행 → 리스너가 이메일 전송 / 쿠폰 발급 담당      
+```java
+@Transactional
+public void signUp(final MemberSignUpRequest dto) {
+    final Member member = memberRepository.save(dto.toEntity());
+    eventPublisher.publishEvent(new MemberSignedUpEvent(member));
+}
+```
+
+### 2. 리스너 등록 (@TransactionalEventListener)
+```java
+@Component
+@RequiredArgsConstructor
+public class MemberEventHandler {
+
+    private final EmailSenderService emailSenderService;
+
+    @TransactionalEventListener
+    public void memberSignedUpEventListener(MemberSignedUpEvent event) {
+        emailSenderService.sendSignUpEmail(event.getMember());
+    }
+}
+```
+- `@TransactionalEventListener` 사용 시 **트랜잭션이 Commit된 후 실행됨**
+- 트랜잭션 롤백 시 외부 호출도 실행되지 않음 -> **데이터 정합성 보장**
+- 
+### 3. 비동기처리 (@Async + @EventListener)
+```
+@Component
+@RequiredArgsConstructor
+public class OrderEventHandler {
+
+    private final CartService cartService;
+
+    @Async
+    @EventListener
+    public void orderCompletedEventListener(OrderCompletedEvent event) {
+        cartService.deleteCart(event.getOrder());
+    }
+}
+```
+- `@Async` 사용 시 별도 쓰레드에서 실행 → 성능 최적화 / 트랜잭션 분리되어 비동기 처리
