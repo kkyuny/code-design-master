@@ -428,7 +428,6 @@ void testFruits(String fruit) {
     assertNotNull(fruit);
 }
 ```
-> 예시 코드
 
 ## AssertJ 사용 예시
 ```java
@@ -444,5 +443,5 @@ void testString() {
         .hasSize(7);
 }
 ```
-> 체이닝 방법을 사용하여 테스트 할 수 있다.
+> 체이닝 방법을 사용하여 테스트 할 수 있으며,
 > 정확한 실패 메시지 제공과 풍부한 조건 메서드를 제공하여 테스트가 용이하다.
