@@ -2,10 +2,10 @@
 ## ✔ Lombok을 잘 사용해야 객체 디자인을 망치치 않는다.
 - @Data는 지양하자
     - @Setter가 무분별하게 남용된다.
-  ```
+  ```java
   @Column(name = "email, nullable = false, updatable = false)
   private String email;
-  -> 위와 같이 변경이 되어선 안되는 코드에 Setter 설정은 적절하지 않다.
+  // 위와 같이 변경이 되어선 안되는 코드에 Setter 설정은 적절하지 않다.
   ```
     - 양방향 관계 설정 시 `ToString 양방향 순환참조` 문제
         - 순환참조가 일어나는 부분에 `@Exclude`를 사용하여 해결할 수 있다.
@@ -137,7 +137,7 @@ public enum ErrorCode {
 ## ✔ 효율적인 Validaion
 - Custom Validation 어노테이션 만들기
     - 컨트롤러에서 직접 값 검증을 진행할 수 있지만 `검증 어노테이션`을 만들어 처리하면 중복되는 코드를 줄일 수 있다.
-      ```
+      ```java
       // 컨트롤러
       @PostMapping
       public Member create(@RequestBody @Valid final SignUpRequest dto) {
@@ -214,7 +214,7 @@ public enum ErrorCode {
 - 책임은 명확해야한다.
     - 서비스 메서드나 클래스는 **무엇을 하는지, 왜 존재하는지**가 명확해야 한다.
 - 책임이 명확하면 대체가 가능하다.
-    ```
+    ```java
     Member updateName(Long id, String name); // 대체성이 없고 책임이 명확하지 않다.
     void changePassword(PasswordChangeRequest dto); // 비밀번호를 바꾼다라는 책임이 명확하다.
     ```
@@ -314,30 +314,30 @@ public void apply(final long couponId) {
 
 ### ch7. 시스템 내 강결합 문제 해결
 ## ApplicationEventPublisher를 이용한 시스템 내의 강결합 문제 해결
-- 🔧 기존 문제점
-    ```java
-    @Service
-    @RequiredArgsConstructor
-    public class MemberSignUpService {
-    
-        private final MemberRepository memberRepository;
-        private final CouponIssueService couponIssueService;
-        private final EmailSenderService emailSenderService;
-    
-        @Transactional
-        public void signUp(final MemberSignUpRequest dto) {
-            final Member member = memberRepository.save(dto.toEntity());
-            emailSenderService.sendSignUpEmail(member); // 외부 호출
-            couponIssueService.issueSignUpCoupon(member.getId()); // 예외 발생 시 전체 롤백
-        }
-    }
-    ```
-    - 🔴 문제 요약
-        - 회원가입, 이메일 전송, 쿠폰 발급이 하나의 서비스에 모두 의존 → 강한 결합
-        - 트랜잭션 내에서 외부 시스템 호출 → 예외 발생 시 롤백 불일치 위험
-        (ex: 이메일은 전송됐지만 DB는 롤백)
+### 🔧 기존 문제점
+```java
+@Service
+@RequiredArgsConstructor
+public class MemberSignUpService {
 
-- 🧩 해결 전략: 이벤트 기반 아키텍처 도입
+    private final MemberRepository memberRepository;
+    private final CouponIssueService couponIssueService;
+    private final EmailSenderService emailSenderService;
+
+    @Transactional
+    public void signUp(final MemberSignUpRequest dto) {
+        final Member member = memberRepository.save(dto.toEntity());
+        emailSenderService.sendSignUpEmail(member); // 외부 호출
+        couponIssueService.issueSignUpCoupon(member.getId()); // 예외 발생 시 전체 롤백
+    }
+}
+```
+- 🔴 문제 요약
+    - 회원가입, 이메일 전송, 쿠폰 발급이 하나의 서비스에 모두 의존 → 강한 결합
+    - 트랜잭션 내에서 외부 시스템 호출 → 예외 발생 시 롤백 불일치 위험
+    (ex: 이메일은 전송됐지만 DB는 롤백)
+
+### 🧩 해결 전략: 이벤트 기반 아키텍처 도입
 ### 1. 이벤트발행 구조로 리팩토링
 - 회원가입 후 이벤트 발행 → 리스너가 이메일 전송 / 쿠폰 발급 담당      
 ```java
@@ -364,9 +364,9 @@ public class MemberEventHandler {
 ```
 - `@TransactionalEventListener` 사용 시 **트랜잭션이 Commit된 후 실행됨**
 - 트랜잭션 롤백 시 외부 호출도 실행되지 않음 -> **데이터 정합성 보장**
-- 
+
 ### 3. 비동기처리 (@Async + @EventListener)
-```
+```java
 @Component
 @RequiredArgsConstructor
 public class OrderEventHandler {
