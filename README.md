@@ -35,6 +35,9 @@
 - UnChecked Exception: `예외 처리하지 않아도됨` / `Rollback 진행` / `NullPointerException, IllegalArgumentException 등`
     > 체크드 익셉션은 롤백이 되지 않기 때문에 다른 곳으로 예외를 전파하는건 바람직하지 않다.    
     > 예외를 언체크드 익셉션으로 처리할 수 있다면 언체크드 익셉션으로 처리하는 것이 좋다.
+    > 체크드 익셉션은 롤백이 되지않고 언체크드 익셉션은 롤백이 되는 이유는
+    > 체크드 익셉션은 예측이 가능한 예외이기 때문에 비즈니스적으로 처리가 가능하기 때문에 롤백을 지원하고
+    > 언체크드 익셉션은 예측이 불가능한 예외이기 때문에 롤백을 지원한다.
 
 ### ch5. API Server Error 처리
 ## ✔ 통일된 Error Response를 갖자.
@@ -174,7 +177,7 @@ public enum ErrorCode {
       ```
       - **@Constraint**: 어떤 Validator 클래스와 연결되는지를 지정함(검증 로직)
       - **@Target**: 어노테이션을 어디에 붙일 수 있는지 (예: 필드, 메서드 등)
-      - **@Retention**: 런타임에도 유지되어야 검증 가능    
+      - **@Retention(RetentionPolicy.RUNTIME)**: 런타임에도 유지되어야 검증 가능    
       - **message / groups / payload**: Bean Validation 표준 규약 필수 요소
       - **@interface**: 자바에서 어노테이션을 정의할 때 쓰는 문법
       - **@인터페이스인 이유**: 어노테이션은 필드나 메서드 위에 붙여서 메타데이터를 알려주는 도구이기 때문에 정적 구조(=interface)로 정의
@@ -208,11 +211,14 @@ public enum ErrorCode {
         > dto에 `@EmailUnique` private `String` email; 선언으로 해당 로직을 처리할 수 있음.
         > dto 자체에 벨리데이션이 필요한 경우 클래스에 커스텀 어노테이션을 추가하면 된다.
         > 여러 필드를 검사해야 할 땐 어노테이션을 새로 추가하는 것이 일반적인 방법이다.
+        > @Constraint()에 대응하는 클래스로 검증로직이 false를 반환하면 예외를 throw한다.
+        > 컨트롤러 어드바이스에서 해당 익셉션을 @ExceptionHandler(Exception.class)로 받아 처리할 수 있다.
 
 ### ch6. 좋은 객체 디자인
 ## ✔ 객체의 적절한 크기를 찾는 여정
 - 책임은 명확해야한다.
     - 서비스 메서드나 클래스는 **무엇을 하는지, 왜 존재하는지**가 명확해야 한다.
+    - 메서드나 클래스에 의도와 규칙이 드러나도록 설계하면 책임이 명확해지고 혼동이 사라질 수 있다.
 - 책임이 명확하면 대체가 가능하다.
     ```java
     Member updateName(Long id, String name); // 대체성이 없고 책임이 명확하지 않다.
