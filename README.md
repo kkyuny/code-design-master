@@ -402,7 +402,7 @@ public class OrderEventHandler {
 ## ✅ 테스트 메서드 실행 순서 지정
 - 클래스 레벨에서 `@TestMethodOrder` 선언
 ```java
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@TestMethodOrder(MethodOrder.OrderAnnotation.class)
 ```
 - 각 테스트에 실행 순서 지정
 ```java
@@ -427,6 +427,7 @@ void testSecond() {}
     - @EnumSource	Enum 상수 전달
     - @CsvSource	CSV 형태 문자열로 다중 파라미터 전달
     - @MethodSource	메서드에서 파라미터 목록을 반환
+- 하나의 테스트 메서드를 입력 된 값의 크기만큼 반복 실행할 수 있게 해주는 JUnit5 기능이다.
 ```java
 @ParameterizedTest
 @ValueSource(strings = {"apple", "banana"})
